@@ -31,9 +31,12 @@ def GetChapName(url):
 	data = r.text
 	namelist = re.findall(r"(?<=<title>TheDoujin - Read ).+?(?=/)",data)
 	if namelist == []:
-		return url[-5:]
+		return '[' + url[-5:] + ']'
 	else:
-		return namelist[0]
+		if namelist[0] == ' ':
+			return '[' + url[-5:] + ']' + 'cannotgetname'
+		else:
+			return '[' + url[-5:] + ']' + namelist[0]
 
 def SavePic(url,headers,name):
 	req = urllib2.Request(url ,headers = headers)
@@ -78,7 +81,7 @@ def IsMultiPage(url):
 	return itemlist
 
 def WindowsFix(string):
-	pattern = re.compile(r'[\?/\<>*|:]+')
+	pattern = re.compile(r'[\?/\\<>*|:\.]+')
 	p = pattern.findall(string)
 	if p:
 		return pattern.sub(r'_',string)
@@ -148,6 +151,7 @@ def GetPicMain(pageurl):
 		print url
 
 	piclinklist = []
+
 	linkfile = open(chaptername + r'/' + 'PicLink.log','w')
 	print 'Start get pic link...'
 	piclinklist = GetPicLink( pagelinklist ) # Get all pic links
@@ -160,6 +164,8 @@ def GetPicMain(pageurl):
 		linkfile.write('\n')
 	tempstr = 'Total Pic Count: %d' %totalPicCnt
 	linkfile.write(tempstr)
+	linkfile.write('\n')
+	linkfile.write(pageurl)
 
 	linkfile.close()
 
@@ -190,16 +196,8 @@ def GetPicMain(pageurl):
 
 if __name__ == '__main__':
 
-	startpageurl = 'http://thedoujin.com/index.php/categories/16208'
-	# 11319 and 11320 11321 include '?' 11695 11705-11708
-	# 11710     return re.findall(r"(?<=<title>TheDoujin - Read ).+?(?=/)",data)[0]
-	# IndexError: list index out of range
-	# can not get title?
-	# 12151 dir error 12192
-	# 12309?
-
 	'''Caution! Danger! May be Infinite Loop!'''
-	for x in xrange(13001,14000):
+	for x in xrange(3001,4001):
 		pageurl = 'http://thedoujin.com/index.php/categories/%05d' %x
 		print pageurl
 		while True:
@@ -207,6 +205,12 @@ if __name__ == '__main__':
 				GetPicMain(pageurl)
 				break
 			except Exception, e:
+				if str(e) == 'HTTP Error 404: Not Found':
+					print str(e)
+					print 'Pic file broken ... '
+					# f = open('404NotFound.txt','w')  # path need to be fixed
+					# f.close()
+					break
 				print str(e)
 				print 'Try again...'
 			else:
